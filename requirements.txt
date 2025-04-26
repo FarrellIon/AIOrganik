@@ -1,5 +1,5 @@
 fastapi
 uvicorn
 ultralytics
-opencv-python
+python3-opencv
 numpy
