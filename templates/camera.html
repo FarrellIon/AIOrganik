@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trash Detection - Webcam</title>
+</head>
+<body>
+  <h1>Real-time Trash Detection</h1>
+  <video id="video" width="640" height="480" autoplay></video>
+  <canvas id="canvas" width="640" height="480"></canvas>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        console.error("Error accessing webcam: ", err);
+      });
+
+    async function detectFrame() {
+      canvas.toBlob(async (blob) => {
+        const formData = new FormData();
+        formData.append('file', blob, 'frame.jpg');
+
+        const response = await fetch('http://localhost:8000/detect/', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+        drawDetections(data.detections);
+      }, 'image/jpeg');
+
+      setTimeout(detectFrame, 300);
+    }
+    
+    function getBoundingBoxColor(className) {
+      const colors = {
+        'person': 'blue',
+        'trash': 'red',
+        'chair': 'orange',
+        'bottle': 'purple',
+      };
+
+      return colors[className] || 'lime';
+    }
+
+    function drawDetections(detections) {
+      detections.forEach(det => {
+        const color = getBoundingBoxColor(det.class);
+        
+        ctx.beginPath();
+        ctx.rect(det.x1, det.y1, det.x2 - det.x1, det.y2 - det.y1);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = color;
+        ctx.stroke();
+
+        const label = `${det.class} (${det.score.toFixed(2)})`;
+        ctx.fillStyle = color;
+        ctx.font = '16px Arial';
+        ctx.fillText(label, det.x1, det.y1 - 10);
+      });
+    }
+
+    detectFrame();
+  </script>
+</body>
+</html>
