@@ -2,19 +2,14 @@
     "version": 2,
     "builds": [
       {
-        "src": "app.py",
+        "src": "api/index.py",
         "use": "@vercel/python"
       }
     ],
     "routes": [
       {
-        "src": "/.*",
-        "headers": {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type"
-        },
-        "dest": "/main.py"
+        "src": "/(.*)",
+        "dest": "api/index.py"
       }
     ]
   }
